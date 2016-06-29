@@ -54,8 +54,29 @@ public class WikiCrawler {
 	 * @throws IOException
 	 */
 	public String crawl(boolean testing) throws IOException {
-        // FILL THIS IN!
-		return null;
+        if (queue.isEmpty()){
+            return null;
+        }
+        
+        String url = queue.poll();
+        
+        if (!testing && index.isIndexed(url)){
+            return null;
+        }
+        
+        Elements paragraphs;
+        
+        if (testing){
+            paragraphs = wf.readWikipedia(url);
+        }
+        else{
+            paragraphs = wf.fetchWikipedia(url);
+        }
+        
+        index.indexPage(url, paragraphs);
+        queueInternalLinks(paragraphs);
+        
+        return url;
 	}
 	
 	/**
@@ -65,7 +86,19 @@ public class WikiCrawler {
 	 */
 	// NOTE: absence of access level modifier means package-level
 	void queueInternalLinks(Elements paragraphs) {
-        // FILL THIS IN!
+        
+        for (Element chunk:paragraphs){
+            Elements urls = chunk.select("a[href]");
+            
+            for (Element url: urls){
+                
+                String modUrl = url.attr("href");
+                if (modUrl.startsWith("/wiki/")){
+                    modUrl = "https://en.wikipedia.org"+modUrl;
+                    queue.offer(modUrl);
+                }
+            }
+        }
 	}
 
 	public static void main(String[] args) throws IOException {
